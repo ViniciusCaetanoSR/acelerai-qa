@@ -78,7 +78,7 @@ public with sharing class LeadService {
         Set<Id> duplicatedLeadsSet = new Set<Id>();
 
         try {
-            List<Lead> duplicatedLeadsList = [SELECT Id, IsDuplicate__c FROM Lead WHERE Id IN :leadsList];
+            List<Lead> duplicatedLeadsList = [SELECT Id, IsDuplicate__c, RecordType.Name FROM Lead WHERE Id IN :leadsList AND RecordType.Name != 'Mentoria'];
 
             if (!duplicatedLeadsList.isEmpty()) {
                 for (Lead lead : duplicatedLeadsList) {

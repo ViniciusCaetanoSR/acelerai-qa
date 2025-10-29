@@ -1,7 +1,7 @@
 public with sharing class LeadTriggerHandler {
     private static final LeadService leadService = new LeadService();
 
-    public static void onBeforeInsert(List<Lead> newLeads) {
+     public static void onBeforeInsert(List<Lead> newLeads) {
         leadService.setMidiaRecordType(newLeads);
         leadService.processDuplicateLeads(newLeads);
         leadService.validateLeads(newLeads, null);

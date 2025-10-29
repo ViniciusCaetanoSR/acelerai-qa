@@ -6,80 +6,80 @@ public class IntegrationAureaService {
         // Case caso = [SELECT Id, Id_da_Oportunidade__c FROM Case where Id = :idCase and Id_da_Oportunidade__c <> null];
         // System.debug('O idCase do caso em buscarEnviarDados é: ' + idCase);
 		// System.debug('X: idCase ' + idCase);
-        
-        Set<Id> oppIds = new Set<Id>(); 
+
+        Set<Id> oppIds = new Set<Id>();
         for (Case caso : caseList) {
             oppIds.add(caso.Id_da_Oportunidade__c);
         }
 
         Map<Id, Opportunity> oppMap = new Map<Id, Opportunity>([
-            SELECT Id, 
-                   EndOfContractDate__c, 
-                   Owner.Name, 
-                   ContractStartDate__c, 
-                   ContatosMarketing__r.email, 
-                   ContatosMarketing__r.MarketingContactPhone__c, 
-                   ContatosMarketing__r.Name, 
-                   Emaill__c, 
-                   Telefone__c, 
-                   Company__c, 
-                   AccountId, 
-                   Link_Oportunidade_SGC__c 
-            FROM Opportunity 
+            SELECT Id,
+                   EndOfContractDate__c,
+                   Owner.Name,
+                   ContractStartDate__c,
+                   ContatosMarketing__r.email,
+                   ContatosMarketing__r.MarketingContactPhone__c,
+                   ContatosMarketing__r.Name,
+                   Emaill__c,
+                   Telefone__c,
+                   Company__c,
+                   AccountId,
+                   Link_Oportunidade_SGC__c
+            FROM Opportunity
             WHERE id IN :oppIds
-        ]);   
+        ]);
 
-        Set<Id> accIds = New Set<Id>(); 
+        Set<Id> accIds = New Set<Id>();
         for (Opportunity opp : oppMap.values()) {
             accIds.add(opp.AccountId);
         }
 
         Map<Id, Account> accMap = new Map<Id, Account>([
-            SELECT Name, 
-                   CNPJ__c, 
-                   Phone, 
-                   TradeName__c, 
-                   BillingPostalCode, 
-                   BillingStreet, 
-                   BillingCity, 
-                   BillingState, 
-                   BillingCountry, 
-                   Instagram__c, 
-                   Segmento__c 
-            FROM Account 
+            SELECT Name,
+                   CNPJ__c,
+                   Phone,
+                   TradeName__c,
+                   BillingPostalCode,
+                   BillingStreet,
+                   BillingCity,
+                   BillingState,
+                   BillingCountry,
+                   Instagram__c,
+                   Segmento__c
+            FROM Account
             WHERE id IN :accIds
         ]);
-            
+
 
         List<QuoteLineItem> allQuoteLineItems = [
             SELECT id,
-                   Product2.Name, 
+                   Product2.Name,
                    QuoteId,
                    Quote.OpportunityId,
-                   Estado__c, 
-                   Cidade__c, 
-                   Meses__c, 
-                   TotalPrice, 
-                   ProductType__c, 
+                   Estado__c,
+                   Cidade__c,
+                   Meses__c,
+                   TotalPrice,
+                   ProductType__c,
                    Quantity,
                    UnitPrice,
-                   Segmento__c, 
-                   Subsegmento__c, 
-                   Regiao__c 
-            FROM QuoteLineItem 
-            WHERE Quote.OpportunityId IN :oppIds 
-            AND (Quote.Sincronizado__c = true 
-            OR Quote.PagamentoFuturo__c = true) 
+                   Segmento__c,
+                   Subsegmento__c,
+                   Regiao__c
+            FROM QuoteLineItem
+            WHERE Quote.OpportunityId IN :oppIds
+            AND (Quote.Sincronizado__c = true
+            OR Quote.PagamentoFuturo__c = true)
             AND (ProductType__c = 'Direito de Uso' OR ProductType__c = 'Performance') //'performance' adicionado em 28/05 por Bárbara Mór
-        ]; 
-        
+        ];
+
         Map<Id, List<QuoteLineItem>> pracasByOppId = new Map<Id, List<QuoteLineItem>>();
         Map<Id, List<QuoteLineItem>> pecasByOppId = new Map<Id, List<QuoteLineItem>>();
         Map<Id, List<QuoteLineItem>> performanceByOppId = new Map<Id, List<QuoteLineItem>>(); //'performance' adicionado em 28/05 por Bárbara Mór
 
         for (QuoteLineItem qli : allQuoteLineItems) {
             Id oppId = qli.Quote.OpportunityId;
-            
+
             if (qli.ProductType__c == 'Direito de Uso') {
                 if (!pracasByOppId.containsKey(oppId)) {
                     pracasByOppId.put(oppId, new List<QuoteLineItem>());
@@ -111,10 +111,10 @@ public class IntegrationAureaService {
             enviarDados(caso, opp, cliente, pracas, pecas, performance);
         }
     }
-    
-    
+
+
     public static void enviarDados(Case caso, Opportunity opp, Account cliente, List<QuoteLineItem > pracas, List<QuoteLineItem> pecas, List<QuoteLineItem> performance) { //'performance' adicionado em 28/05 por Bárbara Mór
-        
+
         Map<String, Object> requestBody = new Map<String, Object>();
         requestBody.put('cliente', getClienteData(opp, cliente, caso));
         requestBody.put('pracas', getPracasData(pracas));
@@ -122,10 +122,10 @@ public class IntegrationAureaService {
         requestBody.put('performance', getPerformanceData(performance));
 
         // Serializar o corpo da requisição para JSON
-        String requestBodyJson = JSON.serialize(requestBody);                    
-        requestAurea(requestBodyJson, caso.Id);    
+        String requestBodyJson = JSON.serialize(requestBody);
+        requestAurea(requestBodyJson, caso.Id);
     }
-   
+
     @future(callout=true)
     public static void requestAurea(String requestBodyJson, Id relatedRecordId) {
         try {
@@ -143,28 +143,28 @@ public class IntegrationAureaService {
         request.setMethod('POST');
         request.setHeader('Content-Type', 'application/json');
         request.setBody(requestBodyJson);
-        request.setTimeout(120000); 
+        request.setTimeout(120000);
         System.debug('X: request ' + request);
         System.debug('X: requestBodyJson ' + requestBodyJson);
-        
+
         HttpResponse response = new Http().send(request);
 
-            if (String.valueOf(response.getStatusCode()).startsWith('20')) {            
-                System.debug('Dados enviados com sucesso!');    
+            if (String.valueOf(response.getStatusCode()).startsWith('20')) {
+                System.debug('Dados enviados com sucesso!');
                 System.debug('StatusCode do if: ' + response.getStatusCode());
                 LoggerUtility.createLogIntegrationSuccess(response, relatedRecordId, requestBodyJson, 'Aurea', 'Método: requestAurea');
 
             } else {
                 System.debug('Mensagem do else: ' + response.getStatusCode());
-                LoggerUtility.createLogIntegrationException(response, relatedRecordId, requestBodyJson, 'Aurea', 'Método: requestAurea'); 
+                LoggerUtility.createLogIntegrationException(response, relatedRecordId, requestBodyJson, 'Aurea', 'Método: requestAurea');
             }
-            
+
         } catch (Exception e) {
             System.debug('Mensagem da exceção: ' + e.getMessage());
             LoggerUtility.createLogException(e, relatedRecordId, 'Método: requestAurea');
         }
     }
-       
+
 
     public static Map<String, Object> getClienteData(Opportunity opp, Account cliente, Case caso ) {
         Map<String, Object> clienteData = new Map<String, Object>();
@@ -204,7 +204,7 @@ public class IntegrationAureaService {
         //AureaService.enviarProposta(clienteData);
         return clienteData;
     }
-    
+
     public static List<Map<String, Object>> getPracasData(List<QuoteLineItem> pracas) {
         List<Map<String, Object>> pracasData = new List<Map<String, Object>>();
         for (QuoteLineItem praca : pracas) {

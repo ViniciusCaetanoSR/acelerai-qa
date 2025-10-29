@@ -1,7 +1,7 @@
 /**
- * @description       : 
+ * @description       :
  * @author            : Vinícius Caetano
- * @group             : 
+ * @group             :
  * @last modified on  : 21-03-2025
  * @last modified by  : Vinícius Caetano
 **/
@@ -244,24 +244,24 @@ private class OpportunityServiceTest {
         update opp;
     }
 
-    @isTest 
+    @isTest
     static void testValidateStageGanho() {
         Account accountTest = VirtualTestData.createAccount('accountName');
-        insert accountTest; 
+        insert accountTest;
 
         Contact contactTest = VirtualTestData.createContact('lastName', accountTest.Id, 'test@example.com', '77673267632763');
         insert contactTest;
 
         Opportunity opportunity = VirtualTestData.createOpportunity(
             'opportunityName',
-            accountTest.Id, 
-            '674867536768', 
-            'Financeiro', 
-            'clientType', 
+            accountTest.Id,
+            '674867536768',
+            'Financeiro',
+            'clientType',
             Date.today().addDays(7),
             'Em Negociação'
-            
-        );   
+
+        );
 
         opportunity.MonthlyInvestmentMedia_Content__c = 'Não Invisto';
         opportunity.Tipo_de_Cliente__C = 'Cliente final';
@@ -285,11 +285,11 @@ private class OpportunityServiceTest {
         Quote quote = VirtualTestData.createQuote(
             'QuoteName',
             opportunity.Id
-        ); 
+        );
 
-        quote.VendaFutura__c = true; 
-        quote.Sincronizado__c = true; 
-        quote.PagamentoFuturo__c = false; 
+        quote.VendaFutura__c = true;
+        quote.Sincronizado__c = true;
+        quote.PagamentoFuturo__c = false;
         quote.DataVendaFutura__c = Date.today().addDays(-7);
 
         insert quote;
@@ -308,25 +308,25 @@ private class OpportunityServiceTest {
 
     }
 
-    @isTest 
+    @isTest
     static void testValidateStageGanhoPagamentoFuturo() {
 
         Account accountTest = VirtualTestData.createAccount('accountName');
-        insert accountTest; 
+        insert accountTest;
 
         Contact contactTest = VirtualTestData.createContact('lastName', accountTest.Id, 'test@example.com', '77673267632763');
         insert contactTest;
 
         Opportunity opportunity = VirtualTestData.createOpportunity(
             'opportunityName',
-            accountTest.Id, 
-            '674867536768', 
-            'Financeiro', 
-            'clientType', 
+            accountTest.Id,
+            '674867536768',
+            'Financeiro',
+            'clientType',
             Date.today().addDays(7),
             'Em Negociação'
-            
-        );   
+
+        );
 
         opportunity.MonthlyInvestmentMedia_Content__c = 'Não Invisto';
         opportunity.Tipo_de_Cliente__C = 'Cliente final';
@@ -352,10 +352,10 @@ private class OpportunityServiceTest {
             opportunity.Id
         );
 
-        quote.Sincronizado__c = true; 
-        quote.VendaFutura__c = true; 
-        quote.PagamentoFuturo__c = true; 
-        quote.DataVendaFutura__c = Date.today().addDays(-7); 
+        quote.Sincronizado__c = true;
+        quote.VendaFutura__c = true;
+        quote.PagamentoFuturo__c = true;
+        quote.DataVendaFutura__c = Date.today().addDays(-7);
         insert quote;
 
         Test.startTest();
@@ -369,43 +369,43 @@ private class OpportunityServiceTest {
         Quote updateQuote = [SELECT VendaFutura__c, PagamentoFuturo__c FROM Quote WHERE Id = :quote.Id];
         System.assertEquals(true, updateQuote.VendaFutura__c , 'Venda Futura deve ser verdadeira');
         System.assertEquals(true, updateQuote.PagamentoFuturo__C, 'Pagamento Futuro deve ser verdadeiro');
-    
+
     }
 
-    @isTest 
+    @isTest
     static void testDuplicateOpportunityOpen() {
         Account account = VirtualTestData.createAccount('accountName');
         account.Type = 'Agência';
-        insert account; 
+        insert account;
 
         Opportunity opportunityOpen = VirtualTestData.createOpportunity(
             'opportunityName',
-            account.Id, 
-            '674867536768', 
-            'Financeiro', 
-            'Cliente final', 
+            account.Id,
+            '674867536768',
+            'Financeiro',
+            'Cliente final',
             Date.today().addDays(7),
             'Aprovado'
         );
 
-        opportunityOpen.Emaill__c = 'teste@example.com'; 
+        opportunityOpen.Emaill__c = 'teste@example.com';
         opportunityOpen.Agencia__c = account.Id;
 
-        insert opportunityOpen; 
+        insert opportunityOpen;
 
         Lead leadTeste = new Lead(
           FirstName = 'Lead',
-          LastName = 'Teste', 
-          Email = 'teste@example.com', 
+          LastName = 'Teste',
+          Email = 'teste@example.com',
           Phone = '6768768763363'
         );
 
-        Test.startTest(); 
-            insert leadTeste; 
-        Test.stopTest(); 
+        Test.startTest();
+            insert leadTeste;
+        Test.stopTest();
     }
 
-    @isTest 
+    @isTest
     static void testDuplicateOpportunityClosed() {
         Id recordTypeVarejo = [SELECT Id FROM RecordType WHERE DeveloperName = 'Varejo' AND SObjectType = 'Opportunity' LIMIT 1].Id;
 
@@ -419,19 +419,31 @@ private class OpportunityServiceTest {
             EmailEncodingKey = 'UTF-8',
             LanguageLocaleKey = 'pt_BR',
             LastName = 'Inativo ',
-            FirstName = 'User', 
+            FirstName = 'User',
             IsActive = True
         );
 
         insert userInativo;
 
-        Account account = VirtualTestData.createAccount('accountName');
-        account.CNPJ__c = '16534005000134';
-        account.Type = 'Agência';
-        insert account; 
+        Account account = new Account(
+            Name = 'accountName',
+            SocialMedia_website__c = 'Social Media Test',
+            CompanyName__c = 'CTest',
+            Phone = '+5551982347754',
+            TypeIntermediary__c = 'Agência',
+            CNPJ__c = '16534005000134',
+            BillingStreet = 'Street',
+            BillingCity = 'City',
+            BillingCountry = 'Country',
+            BillingState = 'AC',
+            BillingPostalCode = '12345',
+            Type = 'Agência',
+            Tipodeintermediador__c = 'Agência'
+        );
+        insert account;
 
         Contact contact = VirtualTestData.createContact(
-            'lastName', 
+            'lastName',
             account.Id,
             'teste@example.com',
             '6768768563363'
@@ -441,31 +453,31 @@ private class OpportunityServiceTest {
 
         Opportunity opportunityClosed = VirtualTestData.createOpportunity(
             'opportunityName',
-            account.Id, 
-            '674867536768', 
-            'Financeiro', 
-            'Cliente final', 
+            account.Id,
+            '674867536768',
+            'Financeiro',
+            'Cliente final',
             Date.today().addDays(7),
             'Aprovado'
         );
 
-        opportunityClosed.Emaill__c = 'teste@example.com'; 
+        opportunityClosed.Emaill__c = 'teste@example.com';
         opportunityClosed.CNPJ__c = '16534005000134';
         opportunityClosed.RecordTypeId = recordTypeVarejo;
         opportunityClosed.Funnel__c = 'Varejo';
         opportunityClosed.OwnerId = userInativo.Id;
-         
-        
-        insert opportunityClosed; 
-           
+
+
+        insert opportunityClosed;
+
         Quote quote = VirtualTestData.createQuote(
             'QuoteName',
             opportunityClosed.Id
         );
 
-        quote.VendaFutura__c = true; 
-        quote.DataVendaFutura__c = Date.today().addDays(-7); 
-    
+        quote.VendaFutura__c = true;
+        quote.DataVendaFutura__c = Date.today().addDays(-7);
+
         insert quote;
 
         opportunityClosed.StageName = 'Venda Futura';
@@ -473,17 +485,17 @@ private class OpportunityServiceTest {
 
         Lead leadTeste = new Lead(
           FirstName = 'Lead',
-          LastName = 'Teste', 
-          Email = 'teste@example.com', 
+          LastName = 'Teste',
+          Email = 'teste@example.com',
           Phone = '6768768763363'
         );
 
-        Test.startTest(); 
-            insert leadTeste; 
-        Test.stopTest(); 
+        Test.startTest();
+            insert leadTeste;
+        Test.stopTest();
 
         System.assertEquals(account.Id, opportunityClosed.AccountId , 'O AccountId deve ser o mesmo da Oportunidade');
-        
+
     }
 
     @isTest
@@ -493,10 +505,10 @@ private class OpportunityServiceTest {
         Account account = VirtualTestData.createAccount('accountName');
         account.CNPJ__c = '16534005000134';
         account.Type = 'Agência';
-        insert account; 
+        insert account;
 
         Contact contact = VirtualTestData.createContact(
-            'lastName', 
+            'lastName',
             account.Id,
             'testecontact@example.com',
             '6768768563363'
@@ -506,31 +518,31 @@ private class OpportunityServiceTest {
 
         Opportunity opportunityVendaRD = VirtualTestData.createOpportunity(
             'opportunityName',
-            account.Id, 
-            '674867536768', 
-            'Financeiro', 
-            'Cliente final', 
+            account.Id,
+            '674867536768',
+            'Financeiro',
+            'Cliente final',
             Date.today().addDays(7),
             'Venda Rd'
         );
 
-        opportunityVendaRD.Emaill__c = 'teste@example.com'; 
+        opportunityVendaRD.Emaill__c = 'teste@example.com';
         opportunityVendaRD.CNPJ__c = '16534005000134';
         opportunityVendaRD.RecordTypeId = recordTypeVendaRd;
         opportunityVendaRD.Funnel__c = 'Varejo';
-        
-        insert opportunityVendaRD; 
+
+        insert opportunityVendaRD;
 
         Lead leadTeste = new Lead(
           FirstName = 'Lead',
-          LastName = 'Teste', 
-          Email = 'teste@example.com', 
+          LastName = 'Teste',
+          Email = 'teste@example.com',
           Phone = '6768768763363'
         );
 
-        Test.startTest(); 
-            insert leadTeste; 
-        Test.stopTest(); 
+        Test.startTest();
+            insert leadTeste;
+        Test.stopTest();
     }
 
     @isTest
@@ -559,20 +571,20 @@ private class OpportunityServiceTest {
             QuandoPretendeAnunciar__c = 'Imediatamente',
             SaleType__c = 'Upsell'
         );
-        
+
         insert oppWithoutContactId;
-    
+
 
         Test.startTest();
         String result = OpportunityService.setContactIdWhenEmpty(new List<Opportunity> {oppWithoutContactId});
         Test.stopTest();
 
         System.assertEquals('Oportunidades com ContactIds preenchidos com sucesso', result);
-    }      
+    }
 
-    @isTest 
+    @isTest
     static void testSendEmailOpportunityProductInactive() {
-        
+
         User userActive = new User(
             Username = 'useractive@test.com',
             Email = 'useractive@test.com',
@@ -583,26 +595,26 @@ private class OpportunityServiceTest {
             EmailEncodingKey = 'UTF-8',
             LanguageLocaleKey = 'pt_BR',
             LastName = 'Active',
-            FirstName = 'User', 
+            FirstName = 'User',
             IsActive = True
         );
         insert userActive;
 
         Account accountTest = VirtualTestData.createAccount('accountName');
-        insert accountTest; 
+        insert accountTest;
 
         Contact contactTest = VirtualTestData.createContact('lastName', accountTest.Id, 'test@example.com', '77673267632763');
         insert contactTest;
 
         Opportunity opportunity = VirtualTestData.createOpportunity(
             'opportunityName',
-            accountTest.Id, 
-            '674867536768', 
-            'Financeiro', 
-            'clientType', 
+            accountTest.Id,
+            '674867536768',
+            'Financeiro',
+            'clientType',
             Date.today().addDays(7),
             'Em Negociação'
-        );   
+        );
 
         opportunity.MonthlyInvestmentMedia_Content__c = 'Não Invisto';
         opportunity.Tipo_de_Cliente__C = 'Cliente final';
@@ -625,9 +637,9 @@ private class OpportunityServiceTest {
 
         Quote quote = VirtualTestData.createQuote('Quote Test', opportunity.Id);
         quote.Pricebook2Id = Test.getStandardPricebookId();
-        quote.VendaFutura__c = true; 
-        quote.Sincronizado__c = true; 
-        quote.PagamentoFuturo__c = false; 
+        quote.VendaFutura__c = true;
+        quote.Sincronizado__c = true;
+        quote.PagamentoFuturo__c = false;
         quote.DataVendaFutura__c = Date.today().addDays(-7);
 
 
@@ -678,4 +690,153 @@ private class OpportunityServiceTest {
 
     }
 
+    @IsTest
+    static void testApplyNegotiationTemperatureRules() {
+
+        Account accountTest = VirtualTestData.createAccount('accountName');
+        insert accountTest;
+
+        Contact contactTest = VirtualTestData.createContact('lastName', accountTest.Id, 'test@example.com', '77673267632763');
+        insert contactTest;
+        Opportunity opportunity = VirtualTestData.createOpportunity(
+            'opportunityName',
+            accountTest.Id,
+            '674867536768',
+            'Financeiro',
+            'clientType',
+            Date.today().addDays(7),
+            'Em Negociação'
+
+        );
+
+        opportunity.MonthlyInvestmentMedia_Content__c = 'Não Invisto';
+        opportunity.Tipo_de_Cliente__C = 'Cliente final';
+        opportunity.Ja_foi_anunciante__c = 'Não';
+        opportunity.Veiculacao__c = 'Mídia On';
+        opportunity.ClientsObjectiveWithAcelerai__c = 'Campanha de Lançamento';
+        opportunity.WhatsYourRole__c = 'Analista';
+        opportunity.QuandoPretendeAnunciar__c = 'Imediatamente';
+        opportunity.CNPJ__c = '16534005000134';
+        opportunity.ClientsObjectiveWithAcelerai__c = 'Campanha de Lançamento';
+        opportunity.HaveCurrentlyAgency__c = 'Sim';
+        opportunity.ContatoComprador__c = contactTest.Id;
+        opportunity.ContatoFinanceiro__c = contactTest.Id;
+        opportunity.ContatoJuridico__c = contactTest.Id;
+        opportunity.ContatosMarketing__c = contactTest.Id;
+        opportunity.Pol_tica_Comercial__c = 'Preço normal';
+        opportunity.SaleType__c = 'Upsell';
+
+        insert opportunity;
+
+        Test.startTest();
+        Quote quote = VirtualTestData.createQuote('Quote Test', opportunity.Id);
+
+        insert quote;
+
+        Test.stopTest();
+
+        Opportunity opportunityUpdated = [SELECT Id, Temperatura_da_negociacao__c FROM Opportunity WHERE Id = :opportunity.Id];
+        System.assertEquals('Frio', opportunityUpdated.Temperatura_da_negociacao__c, 'Esperava temperatura igual a frio');
+    }
+
+    @IsTest
+    static void testApplyNegotiationTemperatureRulesForNull() {
+
+        Account accountTest = VirtualTestData.createAccount('accountName');
+        insert accountTest;
+
+        Contact contactTest = VirtualTestData.createContact('lastName', accountTest.Id, 'test@example.com', '77673267632763');
+        insert contactTest;
+        Opportunity opportunity = VirtualTestData.createOpportunity(
+            'opportunityName',
+            accountTest.Id,
+            '674867536768',
+            'Financeiro',
+            'clientType',
+            Date.today().addDays(7),
+            'Em Negociação'
+
+        );
+
+        opportunity.MonthlyInvestmentMedia_Content__c = 'Não Invisto';
+        opportunity.Tipo_de_Cliente__C = 'Cliente final';
+        opportunity.Ja_foi_anunciante__c = 'Não';
+        opportunity.Veiculacao__c = 'Mídia On';
+        opportunity.ClientsObjectiveWithAcelerai__c = 'Campanha de Lançamento';
+        opportunity.WhatsYourRole__c = 'Analista';
+        opportunity.QuandoPretendeAnunciar__c = 'Imediatamente';
+        opportunity.CNPJ__c = '16534005000134';
+        opportunity.ClientsObjectiveWithAcelerai__c = 'Campanha de Lançamento';
+        opportunity.HaveCurrentlyAgency__c = 'Sim';
+        opportunity.ContatoComprador__c = contactTest.Id;
+        opportunity.ContatoFinanceiro__c = contactTest.Id;
+        opportunity.ContatoJuridico__c = contactTest.Id;
+        opportunity.ContatosMarketing__c = contactTest.Id;
+        opportunity.Pol_tica_Comercial__c = 'Preço normal';
+        opportunity.SaleType__c = 'Upsell';
+
+        insert opportunity;
+
+        Quote quote = VirtualTestData.createQuote('Quote Test', opportunity.Id);
+        insert quote;
+
+        Test.startTest();
+            try {
+                opportunity.Temperatura_da_negociacao__c = null;
+                update opportunity;
+                System.assert(false, 'Era esperado lançar exceção e não lançou.');
+            } catch (DmlException e) {
+                System.assert(e.getMessage().contains('Não é possível retirar a seleção de temperatura'),
+                    'Mensagem de erro diferente do esperado. Retornou: ' + e.getMessage());
+            }
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void testApplyNegotiationTemperatureRulesForInsert() {
+
+        Account accountTest = VirtualTestData.createAccount('accountName');
+        insert accountTest;
+
+        Contact contactTest = VirtualTestData.createContact('lastName', accountTest.Id, 'test@example.com', '77673267632763');
+        insert contactTest;
+        Opportunity opportunity = VirtualTestData.createOpportunity(
+            'opportunityName',
+            accountTest.Id,
+            '674867536768',
+            'Financeiro',
+            'clientType',
+            Date.today().addDays(7),
+            'Em Negociação'
+
+        );
+
+        opportunity.MonthlyInvestmentMedia_Content__c = 'Não Invisto';
+        opportunity.Tipo_de_Cliente__C = 'Cliente final';
+        opportunity.Ja_foi_anunciante__c = 'Não';
+        opportunity.Veiculacao__c = 'Mídia On';
+        opportunity.ClientsObjectiveWithAcelerai__c = 'Campanha de Lançamento';
+        opportunity.WhatsYourRole__c = 'Analista';
+        opportunity.QuandoPretendeAnunciar__c = 'Imediatamente';
+        opportunity.CNPJ__c = '16534005000134';
+        opportunity.ClientsObjectiveWithAcelerai__c = 'Campanha de Lançamento';
+        opportunity.HaveCurrentlyAgency__c = 'Sim';
+        opportunity.ContatoComprador__c = contactTest.Id;
+        opportunity.ContatoFinanceiro__c = contactTest.Id;
+        opportunity.ContatoJuridico__c = contactTest.Id;
+        opportunity.ContatosMarketing__c = contactTest.Id;
+        opportunity.Pol_tica_Comercial__c = 'Preço normal';
+        opportunity.SaleType__c = 'Upsell';
+        opportunity.Temperatura_da_negociacao__c = 'Frio';
+
+         Test.startTest();
+            try {
+                insert opportunity;
+            } catch (DmlException e) {
+                System.assert(e.getMessage().contains('Para alterar a Temperatura da Negociação, deve-se ter proposta válida (<7 dias)'),
+                    'Mensagem de erro diferente do esperado. Retornou: ' + e.getMessage());
+            }
+
+        Test.stopTest();
+    }
 }

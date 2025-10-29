@@ -2,7 +2,7 @@
  * @description       :
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             :
- * @last modified on  : 17-09-2025
+ * @last modified on  : 21-05-2025
  * @last modified by  : Vinícius Caetano
  **/
 public without sharing class OpportunityService {
@@ -356,7 +356,14 @@ public without sharing class OpportunityService {
             Date lastDayOfCurrentMonth = firstDayNextMonth.addDays(-1);
             TaskService.TaskEmailResult result;
 
+            Id recordTypeMentoria = Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Mentoria').getRecordTypeId();
+
+
             for (Lead lead : leads) {
+                if (lead.RecordTypeId == recordTypeMentoria) {
+                    continue;
+                }
+
                 //Adicionar Emails do Lead ao Set;
                 leadEmails.add(lead.Email);
             }
@@ -431,8 +438,6 @@ public without sharing class OpportunityService {
             if (!opportunityByLastOppId.isEmpty()) {
                 insert opportunityByLastOppId.values();
             }
-
-            Id recordTypeMentoria = Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Mentoria').getRecordTypeId();
 
             for (Lead currentLead : leads) {
                 // Busca uma oportunidade existente com o email do lead;
@@ -534,8 +539,14 @@ public without sharing class OpportunityService {
             List<Contact> contactToInsert = new List<Contact>();
             TaskService.TaskEmailResult result;
 
+            Id recordTypeMentoria = Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Mentoria').getRecordTypeId();
+
             for (Lead lead : leads) {
                 //Adicionar Emails do Lead ao Set;
+                if (lead.RecordTypeId == recordTypeMentoria) {
+                    continue;
+                }
+
                 leadEmails.add(lead.Email);
             }
 
@@ -763,6 +774,58 @@ public without sharing class OpportunityService {
         }
     }
 
+    public static void sendNotificationForOpportunitiesVarejo(List<Opportunity> opportunities){
+        try {
+            Id recordTypeId = Schema.SObjectType.Opportunity.getRecordTypeInfosByName().get('Varejo').getRecordTypeId();
+            List<Opportunity> opportunitiesToNotify = new List<Opportunity>();
+            List<Messaging.SingleEmailMessage> emailsToSend = new List<Messaging.SingleEmailMessage>();
+            Set<Id> ownerIds = new Set<Id>();
+
+            for (Opportunity opportunity : opportunities) {
+                if (opportunity.Funnel__c == 'Varejo' && opportunity.RecordTypeId == recordTypeId) {
+                    opportunitiesToNotify.add(opportunity);
+                    ownerIds.add(opportunity.OwnerId);
+                }
+            }
+
+            Map<Id, User> ownerMap = new Map<Id, User>([SELECT Id, Email FROM User WHERE Id IN :ownerIds]);
+
+            for (Opportunity opportunityToNotify : opportunitiesToNotify) {
+                CustomNotificationType customNotificationType = getCustomNotificationtype();
+                Id userId = opportunityToNotify.OwnerId;
+                String recordId = opportunityToNotify.Id;
+                Messaging.CustomNotification customNotification = createCustomNotification(customNotificationType, userId, recordId);
+                customNotification.send(new Set<String>{userId});
+
+                User owner = ownerMap.get(userId);
+
+                Messaging.SingleEmailMessage email = EmailService.sendEmailForNewOpportunityVarejo(opportunityToNotify, owner.Email);
+                emailsToSend.add(email);
+            }
+
+            if (!emailsToSend.isEmpty()) {
+                Messaging.sendEmail(emailsToSend);
+            }
+
+        } catch (Exception e) {
+            System.debug('Erro interno do servidor: ' + e.getMessage());
+        }
+    }
+
+    private static Messaging.CustomNotification createCustomNotification(CustomNotificationType cnType, Id userId, String recordId) {
+        Messaging.CustomNotification customNotificationObj = new Messaging.CustomNotification();
+        customNotificationObj.setBody('Oportunidade de Varejo foi criada. Confira!');
+        customNotificationObj.setTitle('Nova Oportunidade Varejo!');
+        customNotificationObj.setNotificationTypeId(cnType.id);
+        customNotificationObj.setSenderId(userId);
+        customNotificationObj.setTargetId(recordId);
+        return customNotificationObj;
+    }
+
+    private static CustomNotificationType getCustomNotificationtype(){
+        return [SELECT Id FROM CustomNotificationType WHERE DeveloperName = 'NotificationOpportunityVarejo' LIMIT 1];
+    }
+
     private static void processUpdateRules(Opportunity opp, Opportunity oldOpp) {
         if (oldOpp.Cota_es_na_oportunidade__c == 0 && opp.Cota_es_na_oportunidade__c != 0) {
             opp.Temperatura_da_negociacao__c = 'Frio';
@@ -770,12 +833,8 @@ public without sharing class OpportunityService {
         if (oldOpp.Cota_es_na_oportunidade__c == 0 && opp.Cota_es_na_oportunidade__c == 0 && opp.Temperatura_da_negociacao__c != null) {
             opp.addError('Para alterar a Temperatura da Negociação, deve-se ter proposta válida (<7 dias)');
         }
-        if (
-            oldOpp.Temperatura_da_negociacao__c != null &&
-            opp.Proposta_v_lida__c == 'SEM PROPOSTA VÁLIDA' &&
-            opp.Temperatura_da_negociacao__c != oldOpp.Temperatura_da_negociacao__c
-        ) {
-            opp.addError('Para alterar a Temperatura da Negociação, deve-se ter proposta válida (<7 dias)');
+        if (oldOpp.Temperatura_da_negociacao__c != null && opp.Proposta_v_lida__c == 'SEM PROPOSTA VÁLIDA' && opp.Temperatura_da_negociacao__c != oldOpp.Temperatura_da_negociacao__c) {
+           opp.addError('Para alterar a Temperatura da Negociação, deve-se ter proposta válida (<7 dias)');
         }
         if (oldOpp.Temperatura_da_negociacao__c != null && opp.Temperatura_da_negociacao__c == null) {
             opp.addError('Não é possível retirar a seleção de temperatura');

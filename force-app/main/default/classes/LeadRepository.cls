@@ -46,7 +46,7 @@ public without sharing class LeadRepository implements LeadRepository.ILeadRepos
                 LeadSource,
                 Website__c
             FROM Lead
-            WHERE Email__c IN :emails
+            WHERE Email__c IN :emails AND RecordType.Name != 'Mentoria'
         ]));
 
         return [
@@ -71,7 +71,7 @@ public without sharing class LeadRepository implements LeadRepository.ILeadRepos
                 LeadSource,
                 Website__c
             FROM Lead
-            WHERE Email__c IN :emails
+            WHERE Email__c IN :emails AND RecordType.Name != 'Mentoria'
         ];
     }
 

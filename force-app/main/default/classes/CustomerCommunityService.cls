@@ -2,7 +2,7 @@
  * @description       : Service class to manage customer community access for contacts
  *                      based on opportunity stage changes and contract validity.
  * @author            : Vinícius Caetano
- * @last modified on  : 05-06-2025
+ * @last modified on  : 09-06-2025
  * @last modified by  : Vinícius Caetano
  **/
 public with sharing class CustomerCommunityService {
@@ -57,7 +57,6 @@ public with sharing class CustomerCommunityService {
             Boolean isActiveStage = TARGET_STAGES.contains(opp.StageName);
             Boolean wasActiveStage = oldOpp != null && TARGET_STAGES.contains(oldOpp.StageName);
 
-
             DateTime startDateTime = opp.ContractStartDate__c;
             Date dataInicioContrato = startDateTime != null ? startDateTime.date() : null;
 
@@ -109,6 +108,8 @@ public with sharing class CustomerCommunityService {
 
     /*──────────────────── CONCEDER ACESSO ────────────────────*/
     public static void grantAccessForContacts(Set<Id> contactIds) {
+        Set<Id> accountIds = new Set<Id>();
+
         List<Contact> contacts = [
             SELECT Id, FirstName, LastName, Email, AccountId, Account.Name
             FROM Contact
@@ -116,6 +117,13 @@ public with sharing class CustomerCommunityService {
         ];
         if (contacts.isEmpty())
             return;
+
+        /* Certifica-se de que todas as contas sejam parceiras */
+        for (Contact c : contacts) {
+            accountIds.add(c.AccountId);
+        }
+
+        enablePartner(accountIds);
 
         Id communityProfileId = getCommunityProfileId();
         if (communityProfileId == null) {
@@ -218,12 +226,14 @@ public with sharing class CustomerCommunityService {
         }
         String emailLocalPart = con.Email.split('@')[0];
         String customEmail = emailLocalPart + USERNAME_DOMAIN;
+        String communityNickname = con.Account.Name;
 
         return new User(
             FirstName = firstName,
             LastName = String.isNotBlank(con.LastName) ? con.LastName : DEFAULT_LAST_NAME,
             Email = con.Email,
             Username = customEmail,
+            CommunityNickname = communityNickname,
             Alias = alias,
             TimeZoneSidKey = TIMEZONE_SID_KEY,
             LocaleSidKey = LOCALE_SID_KEY,
@@ -261,5 +271,28 @@ public with sharing class CustomerCommunityService {
                 }
             }
         }
+    }
+
+    public static void enablePartner(Set<Id> accountIds) {
+        if (accountIds == null || accountIds.isEmpty())
+            return;
+
+        List<Account> toEnable = new List<Account>();
+
+        for (Account acc : [
+            SELECT Id, IsPartner
+            FROM Account
+            WHERE Id IN :accountIds AND IsPartner = FALSE
+        ]) {
+            acc.IsPartner = true;
+            toEnable.add(acc);
+        }
+
+        if (!toEnable.isEmpty()) {
+            update toEnable;
+        }
+    }
+    public static void enablePartner(Id accountId) {
+        enablePartner(new Set<Id>{ accountId });
     }
 }

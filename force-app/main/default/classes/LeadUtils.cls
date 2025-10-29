@@ -21,22 +21,23 @@ public class LeadUtils {
         insert leads;
     }
 
-    public static void generateMarketingLeads(Integer numberOfRecords) {
-        
+   public static void generateMarketingLeads(Integer numberOfRecords) {
+        Id recordTypeVarejo = Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Varejo').getRecordTypeId();
+
         List<Lead> leads = new List<Lead>();
 
         leads = createLead(numberOfRecords);
 
-        for(Lead lead : leads){
-            lead.Funil__c = 'Mídias Vendas';
-            lead.WebSite__c = 'www.sbtacelerai.com.br/';
+        for (Lead lead : leads) {
+            lead.RecordTypeId = recordTypeVarejo;
+            lead.WebSite__c = 'www.agencia.com.br/';
         }
 
         insert leads;
     }
 
     public static void generateMarketingLeadsWebsiteUrl(Integer numberOfRecords) {
-        
+
         List<Lead> leads = new List<Lead>();
 
         leads = createLead(numberOfRecords);
@@ -49,7 +50,7 @@ public class LeadUtils {
     }
 
     public static void generateInactiveBaseLeads(Integer numberOfRecords) {
-        
+
         List<Lead> leads = new List<Lead>();
 
         leads = createLead(numberOfRecords);
@@ -57,7 +58,7 @@ public class LeadUtils {
         for(Lead lead : leads){
             lead.referencia_base_antiga_lead__c = 'Base Inativa';
         }
-        
+
         insert leads;
     }
 
@@ -70,7 +71,7 @@ public class LeadUtils {
         List<String> neighborhoods = new List<String>{'Centro', 'Bela Vista', 'Copacabana', 'Savassi', 'Jardim Botânico'};
 
         for (Integer i=0; i < numberOfRecords; i++){
-            
+
             String baseCNPJ = createRandomCNPJ();
             String phone = createRandomPhone();
             String uniqueId = String.valueOf(Math.abs(Crypto.getRandomLong()));
@@ -82,7 +83,7 @@ public class LeadUtils {
             String numberr = String.valueOf(Math.mod(Math.abs(Crypto.getRandomInteger()), 1000));
 
             postalCode = '30' + ('00000' + postalCode).substring(postalCode.length());
-            
+
             Lead lead = new Lead (
                 LastName = '**Test** '+ uniqueId +' - '+datetime.now(),
                 Email = uniqueId+ '@test.com',
@@ -92,7 +93,7 @@ public class LeadUtils {
                 City = city,
                 Phone = '+55319'+phone
             );
-            
+
             leads.add(lead);
         }
         return leads;
@@ -101,13 +102,13 @@ public class LeadUtils {
     public static void removeTodayTestRecords() {
 
         Date today = Date.today();
-        
+
         List<Account> accountsToDelete = [SELECT Id FROM Account WHERE CreatedDate = TODAY AND Name like '%<<Teste>>%'];
-        
+
         List<Contact> contactsToDelete = [SELECT Id FROM Contact WHERE CreatedDate = TODAY AND Name like '%<<Teste>>%'];
-        
+
         List<Opportunity> opportunitiesToDelete = [SELECT Id FROM Opportunity WHERE CreatedDate = TODAY AND Name like '%<<Teste>>%'];
-        
+
         List<Lead> leadsToDelete = [SELECT Id FROM Lead WHERE CreatedDate = TODAY AND Name like '%<<Teste>>%'];
 
         if (!opportunitiesToDelete.isEmpty()) {
@@ -116,7 +117,7 @@ public class LeadUtils {
 
         if (!contactsToDelete.isEmpty()) {
             delete contactsToDelete;
-        } 
+        }
 
         if (!accountsToDelete.isEmpty()) {
             delete accountsToDelete;
@@ -124,7 +125,7 @@ public class LeadUtils {
 
         if (!leadsToDelete.isEmpty()) {
             delete leadsToDelete;
-        } 
+        }
     }
 
     public static String createRandomCNPJ() {
@@ -134,26 +135,26 @@ public class LeadUtils {
         }
         Integer[] weights1 = new Integer[] {5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2};
             Integer[] weights2 = new Integer[] {6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2};
-                
+
                 Integer sum1 = 0;
         for (Integer i = 0; i < weights1.size(); i++) {
             sum1 += Integer.valueOf(baseCNPJ.substring(i, i + 1)) * weights1[i];
         }
-        
+
         Integer mod1 = Math.mod(sum1, 11);
         Integer firstDigit = (mod1 < 2) ? 0 : 11 - mod1;
         baseCNPJ += String.valueOf(firstDigit);
-        
+
         Integer sum2 = 0;
         for (Integer i = 0; i < weights2.size(); i++) {
             sum2 += Integer.valueOf(baseCNPJ.substring(i, i + 1)) * weights2[i];
         }
-        
+
         Integer mod2 = Math.mod(sum2, 11);
         Integer secondDigit = (mod2 < 2) ? 0 : 11 - mod2;
         return baseCNPJ + String.valueOf(secondDigit);
     }
-    
+
     public static String createRandomPhone() {
         String phone = '';
         for (Integer u = 0; u < 8; u++) {

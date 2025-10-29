@@ -38,6 +38,12 @@ public with sharing class LeadValidationService {
     }
 
     public void handleDuplicateLead(Lead newLead, Lead existingLead, List<Lead> leadsToDelete, List<Lead> leadsToUpdate) {
+        Id recordTypeMentoria = Schema.SObjectType.Lead.getRecordTypeInfosByName().get('Mentoria').getRecordTypeId();
+
+        if (newLead.RecordTypeId == recordTypeMentoria) {
+            return;   // Pula leads do tipo Mentoria
+        }
+
         System.debug('chamou o handleDuplicated');
         if (newLead == null || existingLead == null) {
             return;

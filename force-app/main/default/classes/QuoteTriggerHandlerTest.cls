@@ -3,14 +3,13 @@ public with sharing class QuoteTriggerHandlerTest {
     //OpportunityLineItemServiceTest
     @TestSetup
     static void makeData(){
-        try {
         Account account = VirtualTestData.createAccount('Account Test');
         insert account;
 
         Opportunity opportunity = VirtualTestData.createOpportunity('Opp Test', account.Id, '51981234565', 'Agronegócio', 'Agência', Date.today(), 'Qualificação');
         insert opportunity;
 
-        Quote quote = new Quote(Name = 'Quote Test', OpportunityId = opportunity.Id, CampaignAmount__c = 1234);
+        Quote quote = VirtualTestData.createQuote('Quote Test', opportunity.Id);
         quote.Pricebook2Id = Test.getStandardPricebookId();
 
         Product2 product = VirtualTestData.createProduct('Product Test', 'Direito de Uso');
@@ -22,12 +21,13 @@ public with sharing class QuoteTriggerHandlerTest {
             UnitPrice = 1000,
             IsActive = true
         );
-        insert new List<SObject> { quote, pricebookEntry };
-
-        } catch (Exception e){
-            System.debug('Erro na QuoteTriggerHandlerTest: ' + e.getMessage());
-        }
         
+        Test.startTest();
+        insert new List<SObject> {
+            quote,
+            pricebookEntry
+        };            
+        Test.stopTest();
     }
 
     @isTest
@@ -136,7 +136,7 @@ public with sharing class QuoteTriggerHandlerTest {
         Assert.areEqual(1, actualResult.size());
     }
 
-    /*@isTest
+    @isTest
     private static void shouldNotSyncOppQuoteProductsViaFlowBecauseIsFuturePayment () {
         PricebookEntry pricebookEntry = [SELECT Id, Product2Id FROM PricebookEntry LIMIT 1];
         
@@ -153,7 +153,7 @@ public with sharing class QuoteTriggerHandlerTest {
 
         List<OpportunityLineItem> actualResult = [SELECT Id FROM OpportunityLineItem WHERE OpportunityId =:quote.OpportunityId];
         Assert.areEqual(1, actualResult.size(),'shouldNotSyncOppQuoteProductsViaFlowBecauseIsFuturePayment');
-    }*/
+    }
 
     @isTest
     static void testUpdateOppStatus(){

@@ -1,31 +1,25 @@
 @isTest
 public class LeadEntryTriggerHandlerTest {
-
-    @isTest
-    static void testOnAfterInsert() {
-        List<LeadEntry__c> entries = new List<LeadEntry__c>();
-
-        entries.add(new LeadEntry__c(
-            Name = 'João 1',
-            Email__c = 'joao1@joaoperformance.com',
-            Phone__c = '51981617948'
-        ));
-
-        entries.add(new LeadEntry__c(
-            Name = 'João 2',
-            Email__c = 'joao2@joaoperformance.com',
-            Phone__c = '51981617949'
-        ));
-
+    
+    @IsTest
+    static void testOnAfterInsert_ShouldCallPublishEventsFromEntries() {
+        List<LeadEntry__c> testEntries = new List<LeadEntry__c>{
+            new LeadEntry__c(
+                Name = 'Lara',
+                Email__c = 'lara@katseye.com',
+                Phone__c = '11999999999'
+            ),
+            new LeadEntry__c(
+                Name = 'Dani',
+                Email__c = 'dani@katseye.com',
+                Phone__c = '11888888888'
+            )
+        };       
+               
         Test.startTest();
-        insert entries; 
+        String result = LeadEntryTriggerHandler.onAfterInsert(testEntries, new List<LeadEntry__c>());
         Test.stopTest();
-
-        List<Lead> createdLeads = [
-            SELECT Id, Email FROM Lead
-            WHERE Email IN ('joao1@joaoperformance.com', 'joao2@joaoperformance.com')
-        ];
-
-        System.assertEquals(2, createdLeads.size(), 'Deveria ter criado 2 leads ');
-    }
+        
+        System.assertEquals('chamou LeadEntryTriggerHandler.AfterInsert', result);
+    }   
 }

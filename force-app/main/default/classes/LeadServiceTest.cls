@@ -47,7 +47,7 @@ private class LeadServiceTest {
 
     @isTest
     static void testQueueDuplicateLeadRemoval() {
-        List<Lead> leads = [SELECT Id, CNPJ__c FROM Lead LIMIT 2];
+        List<Lead> leads = [SELECT Id, CNPJ__c, RecordType.Name FROM Lead WHERE RecordType.Name != 'Mentoria' LIMIT 2];
         for (Lead l : leads) {
             l.IsDuplicate__c = true;
         }
