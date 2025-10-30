@@ -3,11 +3,30 @@ public with sharing class TeamsIntegrationService {
     private static Boolean allowHttpCallout = true;
 
     public static void createTeamsEvent(Event event, String accessToken) {
+        // Buscar owner do evento para obter/criar calendário dedicado
+        User owner = [SELECT Id, TeamsCalendarId__c FROM User WHERE Id = :event.OwnerId LIMIT 1];
+        createTeamsEventInCalendar(event, accessToken, owner);
+    }
+
+    /**
+     * Cria evento no calendário dedicado 'Salesforce' do Teams/Outlook
+     * para evitar duplicação pelo Einstein Activity Capture
+     */
+    private static void createTeamsEventInCalendar(Event event, String accessToken, User owner) {
         System.debug('~~ START [CREATE TeamsEvent]> ' + event + ' | ' + accessToken);
         String teamsMeetingId;
         String teamsEventId;
 
-        try {            
+        try {
+            // ✅ Obter ou criar calendário dedicado 'Salesforce'
+            String calendarId = TeamsCalendarHelper.getOrCreateSalesforceCalendar(owner, accessToken);
+            
+            if (String.isBlank(calendarId)) {
+                System.debug('~~ ERRO: Não foi possível obter calendarId. Abortando criação.');
+                return;
+            }
+            
+            System.debug('~~ Usando calendarId: ' + calendarId);            
             List<EventRelation> relations = [
                 SELECT RelationId, EventId, IsInvitee
                 FROM EventRelation
@@ -109,8 +128,11 @@ public with sharing class TeamsIntegrationService {
             String jsonBody = JSON.serialize(eventBody);
             System.debug('~~ createTeamsEvent, jsonBody: ' + jsonBody);
 
+            // ✅ Criar evento no calendário dedicado em vez do padrão
             HttpRequest req = new HttpRequest();
-            req.setEndpoint('https://graph.microsoft.com/v1.0/me/events');
+            String endpoint = 'https://graph.microsoft.com/v1.0/me/calendars/' + calendarId + '/events';
+            req.setEndpoint(endpoint);
+            System.debug('~~ Endpoint para criação: ' + endpoint);
             req.setMethod('POST');
             req.setHeader('Authorization', 'Bearer ' + accessToken);
             req.setHeader('Content-Type', 'application/json');
@@ -204,6 +226,15 @@ public with sharing class TeamsIntegrationService {
             return;
         }
 
+        // ✅ Buscar owner para obter calendarId
+        User owner = [SELECT Id, TeamsCalendarId__c FROM User WHERE Id = :event.OwnerId LIMIT 1];
+        String calendarId = owner.TeamsCalendarId__c;
+        
+        if (String.isBlank(calendarId)) {
+            System.debug('~~ AVISO: User não possui TeamsCalendarId__c. Tentando atualizar via endpoint padrão.');
+            calendarId = null; // Usar endpoint padrão como fallback
+        }
+
         Map<String, Object> eventBody = new Map<String, Object>{
             'subject' => event.Subject,
             'start' => new Map<String, Object>{
@@ -216,8 +247,16 @@ public with sharing class TeamsIntegrationService {
             }
         };
 
+        // ✅ Usar endpoint específico do calendário se disponível
         HttpRequest req = new HttpRequest();
-        req.setEndpoint('https://graph.microsoft.com/v1.0/me/events/' + event.TeamsEventId__c);
+        String endpoint;
+        if (String.isNotBlank(calendarId)) {
+            endpoint = 'https://graph.microsoft.com/v1.0/me/calendars/' + calendarId + '/events/' + event.TeamsEventId__c;
+        } else {
+            endpoint = 'https://graph.microsoft.com/v1.0/me/events/' + event.TeamsEventId__c;
+        }
+        req.setEndpoint(endpoint);
+        System.debug('~~ Endpoint para update: ' + endpoint);
         req.setMethod('PATCH');
         req.setHeader('Authorization', 'Bearer ' + accessToken);
         req.setHeader('Content-Type', 'application/json');

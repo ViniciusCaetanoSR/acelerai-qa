@@ -267,22 +267,11 @@ public class EventService {
                 return false;
             }
             
-            // ✅ VERIFICAÇÃO ADICIONAL PARA EVITAR DUPLICAÇÃO
-            if (e.ProcessedByTeams__c == false && String.isBlank(e.TeamsEventId__c)) {
-                // ✅ MARCAR COMO EM PROCESSAMENTO IMEDIATAMENTE
-                try {
-                    Event eventToUpdate = new Event(Id = e.Id, ProcessedByTeams__c = true);
-                    update eventToUpdate;
-                    
-                    System.enqueueJob(new TeamsEventQueueable(e.Id));
-                    queuedJob = true;
-                    System.debug('~~ END> handleCreateTeamsEvent enfileirou o job: ' + e.Subject + ' para CRIAR o Evento no Teams');
-                } catch (Exception ex) {
-                    System.debug('Erro ao marcar evento como processado: ' + ex.getMessage());
-                }
-            } else {
-                System.debug('~~ SKIP> Evento já processado ou já possui TeamsEventId: ' + e.Subject);
+            if (e.ProcessedByTeams__c == false) {
+                System.enqueueJob(new TeamsEventQueueable(e.Id));
+                queuedJob = true;
             }
+            System.debug('~~ END> handleCreateTeamsEvent enfileirou o job: ' + e.Subject + ' para CRIAR o Evento no Teams');
         }
         return queuedJob;
     }

@@ -5,7 +5,28 @@ private class TeamsIntegrationServiceTest {
         public HTTPResponse respond(HTTPRequest req) {
             HttpResponse res = new HttpResponse();
 
-            if (req.getMethod() == 'POST') {
+            // GET /me/calendars - buscar calendários
+            if (req.getMethod() == 'GET' && req.getEndpoint().contains('/calendars') && !req.getEndpoint().contains('/events')) {
+                res.setStatusCode(200);
+                res.setBody(JSON.serialize(new Map<String, Object>{
+                    'value' => new List<Object>{
+                        new Map<String, Object>{
+                            'id' => 'cal-salesforce-123',
+                            'name' => 'Salesforce'
+                        }
+                    }
+                }));
+            }
+            // POST /me/calendars - criar calendário
+            else if (req.getMethod() == 'POST' && req.getEndpoint().contains('/calendars') && !req.getEndpoint().contains('/events')) {
+                res.setStatusCode(201);
+                res.setBody(JSON.serialize(new Map<String, Object>{
+                    'id' => 'cal-new-456',
+                    'name' => 'Salesforce'
+                }));
+            }
+            // POST /me/calendars/{id}/events - criar evento no calendário
+            else if (req.getMethod() == 'POST' && req.getEndpoint().contains('/events')) {
                 res.setStatusCode(201);
                 res.setBody(JSON.serialize(new Map<String, Object>{
                     'id' => 'evt123',

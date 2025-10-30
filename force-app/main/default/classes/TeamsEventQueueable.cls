@@ -18,8 +18,7 @@ public without sharing class TeamsEventQueueable implements Queueable, Database.
             Boolean validAccessToken = TeamsOAuth_Helper.handleTokenExpiration(owner);
             
             if (validAccessToken) {
-                
-                if (String.isBlank(ev.TeamsEventId__c) && ev.ProcessedByTeams__c == false) { //criar ou colocar outro campo
+                if (String.isBlank(ev.TeamsEventId__c) && ev.ProcessedByTeams__c == false) { 
                     if (!Test.isRunningTest()) {
                         System.enqueueJob(new TeamsCreateEventQueueable(ev.Id, owner.TeamsAccessToken__c));
                         System.debug('Enfilou job para CRIAR evento no Teams: ' + ev.Subject);
